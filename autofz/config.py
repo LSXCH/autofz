@@ -574,7 +574,7 @@ FUZZERS_AFL = [
 
 FUZZERS = [
     'afl', 'aflfast', 'fairfuzz', 'mopt', 'lafintel', 'learnafl', 'redqueen',
-    'radamsa', 'qsym', 'angora', 'libfuzzer'
+    'radamsa', 'qsym', 'angora', 'libfuzzer', 'honggfuzz'
 ]
 
 # Used by fuzz driver
