@@ -178,7 +178,6 @@ class AFLWatcher(Watcher):
         # AFL reuses the output directory if it already exists, but creates the
         # directories in it
         fuzzer_dir = config.output_dir
-        fuzzer_dir.mkdir(parents=True, exist_ok=True)
 
         target_directories = (
             fuzzer_dir / "queue",
@@ -268,7 +267,7 @@ class QSYMWatcher(Watcher):
     def __init__(self, config: WatcherConfig):
         # QSYM reuses all directories if they are found, so create them in advance
         fuzzer_dir = config.output_dir
-
+        print("fuzzer_dir:  " + str(fuzzer_dir))
         target_directories = (
             fuzzer_dir / "queue",
             fuzzer_dir / "errors",
@@ -296,8 +295,80 @@ class QSYMWatcher(Watcher):
 
         return test_case_type
 
+class EclipserWatcher(Watcher):
+    def __init__(self, config: WatcherConfig):
+        # QSYM reuses all directories if they are found, so create them in advance
+        fuzzer_dir = config.output_dir
+        print("fuzzer_dir:  " + str(fuzzer_dir))
+
+        target_directories = (
+            fuzzer_dir / "queue",
+            fuzzer_dir / "errors",
+            fuzzer_dir / "hangs",
+        )
+
+        for target_directory in target_directories:
+            target_directory.mkdir(parents=True, exist_ok=True)
+            # print(str(target_directory) + " done")
+
+        super().__init__(target_directories)
+
+    def _ignore_test_case(self, test_case_path: Path) -> bool:
+        # Ignore files that do not conform to the naming convention
+        return not test_case_path.name.startswith("id:")
+
+    def _get_test_case_type(self, test_case_path: Path) -> SeedType:
+        if test_case_path.parts[-2] == "errors":
+            test_case_type = SeedType.CRASH
+        elif test_case_path.parts[-2] == "hangs":
+            test_case_type = SeedType.HANG
+        elif test_case_path.parts[-2] == "queue":
+            test_case_type = SeedType.NORMAL
+        else:
+            raise ValueError("Unknown seed type observed.")
+
+        return test_case_type
 
 class LibFuzzerWatcher(Watcher):
+    def __init__(self, config: WatcherConfig):
+        target_directories = (
+            config.output_dir / "queue",
+            config.output_dir / "crashes",
+        )
+
+        super().__init__(target_directories)
+
+    def _manage_directories(self) -> None:
+        # The entity which starts the driver is responsible for creating the
+        # target folders when using libfuzzer. The queue is used for the seeds
+        # as well, so it needs to be created before.
+        for target_directory in self._target_directories:
+            logger.debug(f"Waiting on directory: {target_directory}")
+            self._wait_for_dir(target_directory)
+
+    def _ignore_test_case(self, test_case_path: Path) -> bool:
+        # Filter out the seeds coming from the framework, they are written in
+        # the queue folder.
+        # logger.info(test_case_path.name)
+        return test_case_path.name.startswith("framework-")
+
+    def _get_test_case_type(self, test_case_path: Path) -> SeedType:
+        if test_case_path.name.startswith("crash-"):
+            test_case_type = SeedType.CRASH
+        elif test_case_path.name.startswith("leak-"):
+            test_case_type = SeedType.CRASH
+        elif test_case_path.name.startswith("timeout-"):
+            test_case_type = SeedType.HANG
+        elif test_case_path.name.startswith("oom-"):
+            test_case_type = SeedType.HANG
+        else:
+            # Normal test cases have no prefix for libfuzzer, so assume NORMAL
+            # by default
+            test_case_type = SeedType.NORMAL
+
+        return test_case_type
+
+class HonggfuzzWatcher(Watcher):
     def __init__(self, config: WatcherConfig):
         target_directories = (
             config.output_dir / "queue",
@@ -320,21 +391,15 @@ class LibFuzzerWatcher(Watcher):
         return test_case_path.name.startswith("framework-")
 
     def _get_test_case_type(self, test_case_path: Path) -> SeedType:
-        if test_case_path.name.startswith("crash-"):
+        if test_case_path.name.startswith("SIG"):
             test_case_type = SeedType.CRASH
-        elif test_case_path.name.startswith("leak-"):
-            test_case_type = SeedType.CRASH
-        elif test_case_path.name.startswith("timeout-"):
-            test_case_type = SeedType.HANG
-        elif test_case_path.name.startswith("oom-"):
-            test_case_type = SeedType.HANG
         else:
             # Normal test cases have no prefix for libfuzzer, so assume NORMAL
             # by default
             test_case_type = SeedType.NORMAL
 
         return test_case_type
-
+        
 CONFIG_WATCHERS: Dict[WatcherConfig, Watcher] = {}
 
 WATCHERS: Dict[Fuzzer, List[Watcher]] = {}
@@ -352,7 +417,8 @@ def get_watcher(config: WatcherConfig) -> Watcher:
             or config.fuzzer == FuzzerType.LEARNAFL
             or config.fuzzer == FuzzerType.RADAMSA
             or config.fuzzer == FuzzerType.REDQUEEN
-            or config.fuzzer == FuzzerType.LAFINTEL):
+            or config.fuzzer == FuzzerType.LAFINTEL
+            or config.fuzzer == FuzzerType.AFLPLUSPLUS):
         watcher = AFLWatcher(config)
     elif config.fuzzer == FuzzerType.ANGORA:
         watcher = AngoraWatcher(config)
@@ -360,6 +426,10 @@ def get_watcher(config: WatcherConfig) -> Watcher:
         watcher = QSYMWatcher(config)
     elif config.fuzzer == FuzzerType.LIBFUZZER:
         watcher = LibFuzzerWatcher(config)
+    elif config.fuzzer == FuzzerType.HONGGFUZZ:
+        watcher = HonggfuzzWatcher(config)
+    elif config.fuzzer == FuzzerType.ECLIPSER:
+        watcher = EclipserWatcher(config)
     else:
         raise Exception(f"Invalid fuzzer: {config.fuzzer}")
 
@@ -384,6 +454,11 @@ def parse_fuzzer_dir_to_group_watch_type(fuzzer_dir: Path) -> FuzzerType:
     if fuzzer == FuzzerType.QSYM:
         if last_dir == 'qsym':
             fuzzer_type = FuzzerType.QSYM
+        else:
+            fuzzer_type = FuzzerType.AFL
+    elif fuzzer == FuzzerType.ECLIPSER:
+        if last_dir == 'eclipser':
+            fuzzer_type = FuzzerType.ECLIPSER
         else:
             fuzzer_type = FuzzerType.AFL
     else:

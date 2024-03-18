@@ -1454,7 +1454,7 @@ def main():
                   jobs=JOBS,
                   input_dir=INPUT,
                   empty_seed=ARGS.empty_seed)
-
+        
         coverage.thread_run_fuzzer(TARGET,
                                    fuzzer,
                                    FUZZERS,

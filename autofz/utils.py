@@ -103,7 +103,8 @@ def fuzzer_has_subdir(fuzzer: FuzzerType) -> bool:
             or fuzzer == FuzzerType.MOPT or fuzzer == FuzzerType.FAIRFUZZ
             or fuzzer == FuzzerType.LEARNAFL or fuzzer == FuzzerType.RADAMSA
             or fuzzer == FuzzerType.REDQUEEN or fuzzer == FuzzerType.LAFINTEL
-            or fuzzer == FuzzerType.QSYM or fuzzer == FuzzerType.ANGORA):
+            or fuzzer == FuzzerType.QSYM or fuzzer == FuzzerType.ANGORA
+            or fuzzer == FuzzerType.ECLIPSER):
         return True
     return False
 

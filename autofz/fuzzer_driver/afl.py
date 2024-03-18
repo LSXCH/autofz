@@ -482,6 +482,37 @@ class RADAMSA(AFLPPBase):
         args += self.argument.split(' ')
         return args
 
+class AFLPLUSPLUS(AFLPPBase):
+    @property
+    def afl_command(self):
+        global FUZZER_CONFIG
+        return FUZZER_CONFIG['aflplusplus']['command']
+
+    @property
+    def target(self):
+        global FUZZER_CONFIG
+        target_root = FUZZER_CONFIG['aflplusplus']['target_root']
+        return os.path.join(target_root, self.group, self.program,
+                            self.program)
+
+    def gen_cwd(self):
+        return os.path.dirname(self.target)
+
+
+    def gen_run_args(self):
+        self.check()
+        args = []
+        if self.cgroup_path:
+            args += ['cgexec', '-g', f'cpu:{self.cgroup_path}']
+        args += [self.afl_command, '-i', self.seed, '-o', self.output]
+        args += ['-m', 'none']
+        args += ['-t', '1000+']
+        args += ['-M'] if self.master else ['-S']
+        args += [self.name]
+        args += ['--', self.target]
+        args += self.argument.split(' ')
+        return args
+
 
 class AFLBasedController(ControllerModel):
     def __init__(self, AFLClass, name, seed, output, group, program, argument,
@@ -713,3 +744,11 @@ class RADAMSAController(AFLBasedController):
                          argument, cgroup_path)
         self.db = peewee.SqliteDatabase(
             os.path.join(Config.DATABASE_DIR, 'autofz-radamsa.db'))
+
+class AFLPLUSPLUSController(AFLBasedController):
+    def __init__(self, seed, output, group, program, argument, thread,
+                 cgroup_path):
+        super().__init__(AFLPLUSPLUS, 'aflplusplus', seed, output, group, program,
+                         argument, cgroup_path)
+        self.db = peewee.SqliteDatabase(
+            os.path.join(Config.DATABASE_DIR, 'autofz-aflplusplus.db'))

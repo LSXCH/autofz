@@ -20,10 +20,10 @@ CRASH_DIR = 'crashes'
 CONFIG: Dict = {
     # these will be default parameters for cli.py
     'scheduler': {
-        'prep_time': 300,
-        'focus_time': 300,
+        'prep_time': 60,
+        'focus_time': 60,
         'coverage_update_time': 30,
-        'sync_time': 300,
+        'sync_time': 60,
         'timeout': '24h'
     },
     # unused now
@@ -90,6 +90,15 @@ CONFIG: Dict = {
             # afl_command # reuse base afl
             'qsym_command': '/fuzzer/qsym/bin/run_qsym_afl.py'
         },
+        'eclipser': {
+            'input_dir': INPUT_DIR, 
+            'crash_dir': CRASH_DIR,
+            'skip_crash_file': ['README.txt'],
+            'afl_based': True,
+            'target_root': '/d/p/normal',  # for eclipser
+            # afl_command # reuse base afl
+            'eclipser_command': '/fuzzer/eclipser/build/Eclipser.dll'
+        },
         'lafintel': {
             'input_dir': INPUT_DIR,
             'crash_dir': CRASH_DIR,
@@ -105,6 +114,15 @@ CONFIG: Dict = {
             'target_root': '/d/p/aflclangfast',
             'target_root_cmp': '/d/p/aflclangfastcmplog',
             'command': '/fuzzer/afl++/afl-fuzz',
+            'afl_based': True
+        },
+        'aflplusplus': {
+            'input_dir': INPUT_DIR,
+            'crash_dir': CRASH_DIR,
+            'skip_crash_file': ['README.txt'],
+            'target_root': '/d/p/aflclangfast',
+            'command': '/fuzzer/afl++/afl-fuzz',
+            'aflpp_dir': '/fuzzer/afl++',
             'afl_based': True
         },
         'radamsa': {
@@ -131,6 +149,14 @@ CONFIG: Dict = {
             'target_root': '/d/p/libfuzzer',
             'skip_crash_file': ['README.txt'],
             'command': None,  # target as fuzzer
+            'afl_based': False
+        },
+        'honggfuzz': {
+            'input_dir': INPUT_DIR,
+            'crash_dir': CRASH_DIR,
+            'target_root': '/d/p/honggfuzz',
+            'skip_crash_file': ['README.txt'],
+            'command': '/fuzzer/honggfuzz/honggfuzz',  # 
             'afl_based': False
         }
     },
@@ -569,12 +595,12 @@ CONFIG: Dict = {
 
 FUZZERS_AFL = [
     'afl', 'aflfast', 'fairfuzz', 'mopt', 'lafintel', 'learnafl', 'redqueen',
-    'radamsa', 'qsym'
+    'radamsa', 'qsym', 'eclipser', 'aflplusplus'
 ]
 
 FUZZERS = [
     'afl', 'aflfast', 'fairfuzz', 'mopt', 'lafintel', 'learnafl', 'redqueen',
-    'radamsa', 'qsym', 'angora', 'libfuzzer', 'honggfuzz'
+    'radamsa', 'qsym', 'angora', 'libfuzzer', 'honggfuzz', 'eclipser', 'aflplusplus'
 ]
 
 # Used by fuzz driver

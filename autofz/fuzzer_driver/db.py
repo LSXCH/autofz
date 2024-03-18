@@ -28,7 +28,15 @@ class QSYMModel(BaseModel):
     afl_name = peewee.CharField()
     pid = peewee.IntegerField()
 
-
+class EclipserModel(BaseModel):
+    seed = peewee.CharField()
+    output = peewee.CharField()
+    group = peewee.CharField()
+    program = peewee.CharField()
+    argument = peewee.CharField()
+    afl_name = peewee.CharField()
+    pid = peewee.IntegerField()
+    
 class AngoraModel(BaseModel):
     seed = peewee.CharField()
     output = peewee.CharField()
@@ -40,6 +48,15 @@ class AngoraModel(BaseModel):
 
 
 class LibFuzzerModel(BaseModel):
+    seed = peewee.CharField()
+    output = peewee.CharField()
+    group = peewee.CharField()
+    program = peewee.CharField()
+    argument = peewee.CharField()
+    thread = peewee.IntegerField()
+    pid = peewee.IntegerField()
+
+class HonggfuzzModel(BaseModel):
     seed = peewee.CharField()
     output = peewee.CharField()
     group = peewee.CharField()

@@ -134,7 +134,7 @@ def gen_evaluator_args(target,
     target_args = target_config['args'].get('evaluator', target_default_args)
 
     assert target_args is not None
-
+    print("eval_input_dir: " + str(input_dir))
     seed = None
     if input_dir:
         seed = input_dir
@@ -179,6 +179,7 @@ def thread_run_evaluator(target, fuzzers, output_dir, timeout, input_dir,
                          empty_seed, crash_mode, input_only):
     global EVALUTOR_THREAD
     if EVALUTOR_THREAD: return
+
     thread_evaluator = run_evaluator(target, fuzzers, output_dir, timeout,
                                      input_dir, empty_seed, crash_mode,
                                      input_only)

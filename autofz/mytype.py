@@ -22,7 +22,9 @@ class FuzzerType(enum.Enum):
     QSYM = 'qsym'
     ANGORA = 'angora'
     LIBFUZZER = 'libfuzzer'
-
+    HONGGFUZZ = 'honggfuzz'
+    ECLIPSER = 'eclipser'
+    AFLPLUSPLUS = 'aflplusplus'
 
 class SeedType(enum.Enum):
     NORMAL = enum.auto()

@@ -6,11 +6,12 @@ import sys
 # sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from .afl import (AFLController, AFLFASTController, FAIRFUZZController,
                   LAFINTELController, LEARNAFLController, MOPTController,
-                  RADAMSAController, REDQUEENController)
+                  RADAMSAController, REDQUEENController, AFLPLUSPLUSController)
 from .angora import ANGORAController
 from .libfuzzer import LIBFUZZERController
 from .qsym import QSYMController
-
+from .honggfuzz import HONGGFUZZController
+from .eclipser import ECLIPSERController
 
 def str_to_class(classname):
     return getattr(sys.modules[__name__], classname, None)

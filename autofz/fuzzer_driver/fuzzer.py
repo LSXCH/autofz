@@ -102,6 +102,7 @@ class PSFuzzer(Fuzzer):
                                     stdin=subprocess.DEVNULL,
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL)
+            
 
         assert proc
         self.__proc = proc
